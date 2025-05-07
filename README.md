@@ -2,7 +2,7 @@
 
 ## Authors
 - Alejandro White (PTK406)
-- Mac Tully (WUJ591)
+- Mack Tully (WUJ591)
 
 ## Overview
 **BluBubb** is a Bluetooth-based proximity chat app that allows users to send messages and estimate how far apart they are using signal strength — all without the need for Wi-Fi or cellular data. It’s a lightweight solution for short-range communication in areas where connectivity is limited or unavailable.
