@@ -26,6 +26,6 @@ Traditional messaging apps rely heavily on internet access, making them unusable
 At a crowded outdoor festival, two friends split up to explore. Both open BluBubb and connect their phones via Bluetooth. They send messages back and forth without using data. Later, when one friend gets lost, they use the app’s distance feature to estimate how far the other is and begin walking in the right direction, watching the distance decrease until they reunite.
 
 ## Platform
-- Currently Supported: Android (via Flutter)
-- Under Development: Cross-platform support for iOS using Flutter’s Bluetooth plugins
+- Currently Supported: iOS (via Flutter)
+- Under Development: Cross-platform support for Android
 - Tech Stack: Flutter, Dart, [flutter_blue_plus](https://pub.dev/packages/flutter_blue_plus)
