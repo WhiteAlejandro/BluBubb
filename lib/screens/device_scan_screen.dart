@@ -57,13 +57,12 @@ class _DeviceScanScreenState extends State<DeviceScanScreen> {
   }
 
   void _startScan() {
-    _isScanning = true;
     _devicesList.clear();
     FlutterBluePlus.startScan(timeout: const Duration(seconds: 4));
 
     FlutterBluePlus.scanResults.listen((results) {
       for (ScanResult r in results) {
-        if (!_devicesList.any((d) => d.id == r.device.id)) {
+        if (r.device.name.isNotEmpty && !_devicesList.contains(r.device)) {
           setState(() {
             _devicesList.add(r.device);
           });
@@ -91,16 +90,16 @@ class _DeviceScanScreenState extends State<DeviceScanScreen> {
       appBar: AppBar(title: const Text("Select a Device")),
       body: _devicesList.isEmpty
           ? const Center(child: Text("Scanning for devices..."))
-          : ListView.builder(
+          : ListView.separated(
               itemCount: _devicesList.length,
               itemBuilder: (context, index) {
                 final device = _devicesList[index];
                 return ListTile(
                   title: Text(device.name.isNotEmpty ? device.name : "Unknown Device"),
-                  subtitle: Text(device.id.toString()),
                   onTap: () => _connectToDevice(device),
                 );
               },
+              separatorBuilder: (context, index) => const Divider(), // Adds a thin line between entries
             ),
     );
   }
