@@ -18,11 +18,26 @@ class BluBubbApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
+      // We use `onGenerateRoute` instead of `routes` to pass arguments (like username)
       initialRoute: '/',
-      routes: {
-        '/': (context) => const HomeScreen(),
-        '/scan': (context) => DeviceScanScreen(),
-        '/saved': (context) => const SavedChatsScreen(),
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case '/':
+            return MaterialPageRoute(builder: (context) => const HomeScreen());
+          case '/scan':
+            final deviceName = settings.arguments as String;
+            return MaterialPageRoute(
+              builder: (context) => DeviceScanScreen(deviceName: deviceName),
+            );
+          case '/saved':
+            return MaterialPageRoute(builder: (context) => const SavedChatsScreen());
+          default:
+            return MaterialPageRoute(
+              builder: (context) => const Scaffold(
+                body: Center(child: Text('Page not found')),
+              ),
+            );
+        }
       },
     );
   }

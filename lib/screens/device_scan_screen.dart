@@ -2,66 +2,66 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter_nearby_connections/flutter_nearby_connections.dart';
 
-/// Screen to scan for and connect to nearby devices using Bluetooth.
 class DeviceScanScreen extends StatefulWidget {
+  final String deviceName; // Username passed from HomeScreen
+
+  const DeviceScanScreen({super.key, required this.deviceName});
+
   @override
-  _DeviceScanScreenState createState() => _DeviceScanScreenState();
+  State<DeviceScanScreen> createState() => _DeviceScanScreenState();
 }
 
 class _DeviceScanScreenState extends State<DeviceScanScreen> {
-  late NearbyService nearbyService; // Service for managing peer-to-peer connections
-  List<Device> _devicesList = [];   // Dynamic list of discovered/connected devices
+  late NearbyService nearbyService;        // Main service to manage Bluetooth connections
+  List<Device> _devicesList = [];          // List of discovered devices
 
   @override
   void initState() {
     super.initState();
-    _initializeNearbyService(); // Begin Bluetooth discovery when screen loads
+    _initializeNearbyService();            // Start the nearby service when screen is initialized
   }
 
-  /// Initializes NearbyService and sets up device discovery.
-  Future<void> _initializeNearbyService() async {
+  /// Initializes the NearbyService with the given device name (username),
+  /// sets the strategy, and starts scanning for peers.
+  void _initializeNearbyService() async {
     nearbyService = NearbyService();
 
-    // Start the NearbyService with appropriate service type and strategy
     await nearbyService.init(
-      serviceType: 'blububb', // MUST be consistent across all devices
-      deviceName: 'BluBubb Device',
-      strategy: Strategy.P2P_CLUSTER, // P2P_CLUSTER supports multiple peers
-      callback: (bool isRunning) {
+      serviceType: 'blububb',              // Must match across devices
+      deviceName: widget.deviceName,       // Use the passed-in username
+      strategy: Strategy.P2P_CLUSTER,      // Bluetooth peer discovery strategy
+      callback: (isRunning) {
         if (isRunning) {
-          print("Nearby service running. Starting peer discovery...");
-          nearbyService.startBrowsingForPeers();     // Begin scanning
-          nearbyService.startAdvertisingPeer();      // Make this device discoverable
+          print("Service is running, starting to browse for peers...");
+          nearbyService.startBrowsingForPeers(); // Begin peer discovery
+          nearbyService.startAdvertisingPeer();  // Advertise this device
         } else {
           print("Nearby service failed to start.");
         }
       },
     );
 
-    // Subscribe to state changes (e.g., devices found, updated, or removed)
-    nearbyService.stateChangedSubscription(callback: (List<Device> devicesList) {
+    // Listen for changes in discovered devices
+    nearbyService.stateChangedSubscription(callback: (devicesList) {
       setState(() {
-        _devicesList = devicesList; // Update UI with new device list
+        _devicesList = devicesList;
       });
     });
   }
 
-  /// Connects to a selected device by sending an invitation.
+  /// Attempt to connect to the tapped device
   void _connectToDevice(Device device) async {
     try {
       await nearbyService.invitePeer(
         deviceID: device.deviceId,
         deviceName: device.deviceName,
       );
-
       Fluttertoast.showToast(
         msg: 'Connection request sent to ${device.deviceName}',
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
       );
     } catch (e) {
-      print('Connection error: $e');
-
       Fluttertoast.showToast(
         msg: 'Failed to connect to ${device.deviceName}',
         toastLength: Toast.LENGTH_SHORT,
@@ -70,11 +70,10 @@ class _DeviceScanScreenState extends State<DeviceScanScreen> {
     }
   }
 
-  /// Clean up resources when this screen is closed.
   @override
   void dispose() {
-    nearbyService.stopBrowsingForPeers();     // Stop scanning
-    nearbyService.stopAdvertisingPeer();      // Stop advertising
+    nearbyService.stopBrowsingForPeers();   // Clean up when screen is closed
+    nearbyService.stopAdvertisingPeer();
     super.dispose();
   }
 
@@ -82,22 +81,33 @@ class _DeviceScanScreenState extends State<DeviceScanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Select a Device")),
-      body: _devicesList.isEmpty
-          ? const Center(child: Text("Searching for nearby devices..."))
-          : ListView.builder(
-              itemCount: _devicesList.length,
-              itemBuilder: (context, index) {
-                final device = _devicesList[index];
-
-                return Card(
-                  child: ListTile(
-                    title: Text(device.deviceName),
-                    subtitle: Text(device.deviceId),
-                    onTap: () => _connectToDevice(device), // Attempt to connect when tapped
-                  ),
-                );
-              },
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Text(
+              'Discoverable as: ${widget.deviceName}',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
+          ),
+          Expanded(
+            child: _devicesList.isEmpty
+                ? const Center(child: Text("Searching for nearby devices..."))
+                : ListView.builder(
+                    itemCount: _devicesList.length,
+                    itemBuilder: (context, index) {
+                      final device = _devicesList[index];
+                      return Card(
+                        child: ListTile(
+                          title: Text(device.deviceName),
+                          onTap: () => _connectToDevice(device),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

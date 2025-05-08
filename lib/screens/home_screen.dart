@@ -1,48 +1,62 @@
 import 'package:flutter/material.dart';
-import 'device_scan_screen.dart';
-import 'saved_chats_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _usernameController = TextEditingController();
+
+  void _navigateToScan() {
+    final username = _usernameController.text.trim();
+    if (username.isNotEmpty) {
+      Navigator.pushNamed(
+        context,
+        '/scan',
+        arguments: username,
+      );
+    }
+  }
+
+  void _navigateToSavedChats() {
+    Navigator.pushNamed(context, '/saved');
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('BluBubb'),
-      ),
-      body: Center(
+      appBar: AppBar(title: const Text('BluBubb')),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Placeholder logo using an icon
-            const Icon(
-              Icons.bluetooth_audio,
-              size: 100,
-              color: Colors.blueAccent,
+            // Temporary Bluetooth-style logo
+            const Icon(Icons.bluetooth, size: 100, color: Colors.blue),
+
+            const SizedBox(height: 32),
+
+            // Text field with hint text
+            TextField(
+              controller: _usernameController,
+              decoration: const InputDecoration(
+                hintText: 'Enter your username',
+                border: OutlineInputBorder(),
+              ),
             ),
-            const SizedBox(height: 30),
-            // Connect to a Device button
+
+            const SizedBox(height: 32),
+
             ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => DeviceScanScreen()),
-                );
-              },
+              onPressed: _navigateToScan,
               child: const Text('Connect to a Device'),
             ),
-            const SizedBox(height: 20),
-            // Saved Chats button
+            const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const SavedChatsScreen()),
-                );
-              },
+              onPressed: _navigateToSavedChats,
               child: const Text('Saved Chats'),
             ),
           ],
