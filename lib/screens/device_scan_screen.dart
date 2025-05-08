@@ -24,30 +24,52 @@ class _DeviceScanScreenState extends State<DeviceScanScreen> {
   /// Initializes the NearbyService with the given device name (username),
   /// sets the strategy, and starts scanning for peers.
   void _initializeNearbyService() async {
-    nearbyService = NearbyService();
+  nearbyService = NearbyService();
 
-    await nearbyService.init(
-      serviceType: 'blububb',              // Must match across devices
-      deviceName: widget.deviceName,       // Use the passed-in username
-      strategy: Strategy.P2P_CLUSTER,      // Bluetooth peer discovery strategy
-      callback: (isRunning) {
-        if (isRunning) {
-          print("Service is running, starting to browse for peers...");
-          nearbyService.startBrowsingForPeers(); // Begin peer discovery
-          nearbyService.startAdvertisingPeer();  // Advertise this device
-        } else {
-          print("Nearby service failed to start.");
-        }
-      },
-    );
+  await nearbyService.init(
+    serviceType: 'blububb',
+    deviceName: widget.deviceName,
+    strategy: Strategy.P2P_CLUSTER,
+    callback: (isRunning) {
+      if (isRunning) {
+        print("Service is running, starting to browse and advertise...");
+        nearbyService.startBrowsingForPeers();
+        nearbyService.startAdvertisingPeer();
+      } else {
+        print("Nearby service failed to start.");
+      }
+    },
+  );
 
-    // Listen for changes in discovered devices
-    nearbyService.stateChangedSubscription(callback: (devicesList) {
-      setState(() {
-        _devicesList = devicesList;
-      });
+  // Listen for device state changes (connected, disconnected, found, etc.)
+  nearbyService.stateChangedSubscription(callback: (devicesList) {
+    setState(() {
+      _devicesList = devicesList;
     });
-  }
+
+    // Check if any device has just connected
+    for (var device in devicesList) {
+      if (device.state == SessionState.connected) {
+        print('Connected to ${device.deviceName}');
+        Fluttertoast.showToast(
+          msg: 'Connected to ${device.deviceName}',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+        );
+
+        // TODO: Navigate to chat screen
+      } else if (device.state == SessionState.notConnected) {
+        print('Disconnected from ${device.deviceName}');
+      }
+    }
+  });
+
+  // Optionally handle received data
+  nearbyService.dataReceivedSubscription(callback: (data) {
+    print('Data received from ${data["deviceId"]}: ${data["message"]}');
+    // TODO: Display incoming messages
+  });
+}
 
   /// Attempt to connect to the tapped device
   void _connectToDevice(Device device) async {
