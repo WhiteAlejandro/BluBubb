@@ -28,7 +28,7 @@ class HomeScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const DeviceScanScreen()),
+                      builder: (context) => DeviceScanScreen()),
                 );
               },
               child: const Text('Connect to a Device'),

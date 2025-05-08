@@ -19,11 +19,12 @@ class BluBubbApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true, // Use Material 3 styling
       ),
-      // Set up initial and named routes for navigation
+      // Set the initial screen to the home screen
       initialRoute: '/',
+      // Define named routes for navigation
       routes: {
         '/': (context) => const HomeScreen(),
-        '/scan': (context) => const DeviceScanScreen(),
+        '/scan': (context) => DeviceScanScreen(),
         '/saved': (context) => const SavedChatsScreen(),
       },
     );
