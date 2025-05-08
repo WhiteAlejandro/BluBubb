@@ -1,42 +1,31 @@
 import 'package:flutter/material.dart';
+import 'screens/home_screen.dart';
+import 'screens/device_scan_screen.dart';
+import 'screens/saved_chats_screen.dart';
 
 void main() {
+  // Entry point of the Flutter app
   runApp(const BluBubbApp());
 }
 
-/// The root widget for the BluBubb app.
 class BluBubbApp extends StatelessWidget {
   const BluBubbApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'BluBubb',
-      debugShowCheckedModeBanner: false,
+      title: 'BluBubb', // App title
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true, // Use Material 3 styling
       ),
-      home: const HomePage(),
-    );
-  }
-}
-
-/// The initial home screen of the app.
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('BluBubb'),
-      ),
-      body: const Center(
-        child: Text(
-          'Welcome to BluBubb!',
-          style: TextStyle(fontSize: 24),
-        ),
-      ),
+      // Set up initial and named routes for navigation
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const HomeScreen(),
+        '/scan': (context) => const DeviceScanScreen(),
+        '/saved': (context) => const SavedChatsScreen(),
+      },
     );
   }
 }
