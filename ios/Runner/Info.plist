@@ -26,10 +26,6 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>BluBubb uses Bluetooth to connect to nearby users.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>BluBubb uses location services to improve Bluetooth performance.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
