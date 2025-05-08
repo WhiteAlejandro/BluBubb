@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_nearby_connections/flutter_nearby_connections.dart';
 import 'screens/home_screen.dart';
 import 'screens/device_scan_screen.dart';
 import 'screens/saved_chats_screen.dart';
+import 'screens/chat_screen.dart';
 
 void main() {
   runApp(const BluBubbApp());
@@ -31,6 +33,11 @@ class BluBubbApp extends StatelessWidget {
             );
           case '/saved':
             return MaterialPageRoute(builder: (context) => const SavedChatsScreen());
+          case '/chat':
+            final device = settings.arguments as Device;
+            return MaterialPageRoute(
+              builder: (context) => ChatScreen(device: device),
+            );
           default:
             return MaterialPageRoute(
               builder: (context) => const Scaffold(
