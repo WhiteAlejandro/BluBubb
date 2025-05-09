@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter_nearby_connections/flutter_nearby_connections.dart';
+import 'chat_screen.dart';
 
+/// This screen displays nearby devices using Bluetooth and enables peer-to-peer connections.
+/// It advertises this device's presence and listens for nearby peers.
+/// Once a connection is established, it automatically navigates to the chat screen.
 class DeviceScanScreen extends StatefulWidget {
-  final String deviceName; // Username passed from HomeScreen
+  /// The name of this device/user, passed from the home screen
+  final String deviceName;
 
   const DeviceScanScreen({super.key, required this.deviceName});
 
@@ -12,77 +17,66 @@ class DeviceScanScreen extends StatefulWidget {
 }
 
 class _DeviceScanScreenState extends State<DeviceScanScreen> {
-  late NearbyService nearbyService; // Service that manages Bluetooth connections
-  List<Device> _devicesList = []; // List of discovered devices from nearby service
-  Set<String> _outgoingRequests = {}; // Tracks device IDs we initiated connection with
+  late NearbyService nearbyService;         // Manages peer discovery and connections
+  List<Device> _devicesList = [];           // List of devices discovered nearby
 
   @override
   void initState() {
     super.initState();
-    _initializeNearbyService(); // Start the nearby service when screen initializes
+    _initializeNearbyService();             // Start Bluetooth service on init
   }
 
-  /// Initializes the NearbyService and begins scanning for nearby devices
-  /// Also starts advertising the current device's presence
+  /// Initializes NearbyService, sets up advertising and discovery,
+  /// and registers a callback to respond to device state changes.
   void _initializeNearbyService() async {
     nearbyService = NearbyService();
 
-    // Initialize the NearbyService with service type, device name, and strategy
     await nearbyService.init(
-      serviceType: 'blububb', // The unique service type for this app
-      deviceName: widget.deviceName, // Use the passed-in device name (username)
-      strategy: Strategy.P2P_CLUSTER, // Peer-to-peer clustering strategy for discovery
+      serviceType: 'blububb',
+      deviceName: widget.deviceName,
+      strategy: Strategy.P2P_CLUSTER,
       callback: (isRunning) {
         if (isRunning) {
-          // Service started successfully, begin searching for peers
-          print("Service is running.");
-          nearbyService.startBrowsingForPeers(); // Start looking for nearby peers
-          nearbyService.startAdvertisingPeer();  // Advertise this device's presence
-        } else {
-          // Failed to start the nearby service
-          print("Service failed to start.");
+          nearbyService.startBrowsingForPeers();
+          nearbyService.startAdvertisingPeer();
         }
       },
     );
 
-    // Subscribe to changes in discovered devices (devices found while browsing)
     nearbyService.stateChangedSubscription(callback: (devicesList) {
       setState(() {
-        _devicesList = devicesList; // Update the list of devices when new ones are found
+        _devicesList = devicesList;
       });
 
-      // Show a connection prompt if a device just connected
       for (final device in devicesList) {
         if (device.state == SessionState.connected) {
-          if (device.state == SessionState.connected &&
-              !_outgoingRequests.contains(device.deviceId)) {
-            _showConnectionPrompt(device); // Only show prompt if we did NOT invite them
-          } else{
-            // Automatically navigate sender to chat screen
-            Navigator.pushNamed(context, '/chat', arguments: device);
-          }
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ChatScreen(
+                device: device,
+                nearbyService: nearbyService,
+                deviceName: widget.deviceName,
+              ),
+            ),
+          );
         }
       }
     });
   }
 
-  /// Sends a connection request to the selected device
   void _connectToDevice(Device device) async {
     try {
-      // Attempt to send an invite to the selected device for peer connection
-      _outgoingRequests.add(device.deviceId); // Mark this device as invited
       await nearbyService.invitePeer(
-        deviceID: device.deviceId, // Device ID of the target device
-        deviceName: device.deviceName, // Name of the target device
+        deviceID: device.deviceId,
+        deviceName: device.deviceName,
       );
-      // Show a toast notification to inform the user that the request has been sent
       Fluttertoast.showToast(
         msg: 'Connection request sent to ${device.deviceName}',
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
       );
     } catch (e) {
-      // Show a toast notification if the connection request fails
       Fluttertoast.showToast(
         msg: 'Failed to connect to ${device.deviceName}',
         toastLength: Toast.LENGTH_SHORT,
@@ -91,42 +85,8 @@ class _DeviceScanScreenState extends State<DeviceScanScreen> {
     }
   }
 
-  /// Shows a prompt dialog asking the user whether to accept or decline a connection
-  void _showConnectionPrompt(Device device) {
-    // Display an alert dialog to ask the user to accept or decline the incoming chat request
-    showDialog(
-      context: context,
-      barrierDismissible: false, // Prevent user from closing dialog without action
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Chat Request"),
-          content: Text("Accept chat request from ${device.deviceName}?"),
-          actions: [
-            // Decline the request and disconnect the peer
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Close the dialog
-                nearbyService.disconnectPeer(deviceID: device.deviceId); // Disconnect
-              },
-              child: const Text("Decline"),
-            ),
-            // Accept the request and navigate to the chat screen
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Close the dialog
-                Navigator.pushNamed(context, '/chat', arguments: device); // Go to chat screen
-              },
-              child: const Text("Accept"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   void dispose() {
-    // Stop browsing and advertising when leaving the screen to clean up resources
     nearbyService.stopBrowsingForPeers();
     nearbyService.stopAdvertisingPeer();
     super.dispose();
@@ -134,36 +94,49 @@ class _DeviceScanScreenState extends State<DeviceScanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Select a Device")),
-      body: Column(
-        children: [
-          // Display the device's name that is currently discoverable
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Text(
-              'Discoverable as: ${widget.deviceName}',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+    return WillPopScope(
+      onWillPop: () async {
+        // Override Android system back button to go home
+        Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+        return false;
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Select a Device"),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+            },
+          ),
+        ),
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Text(
+                'Discoverable as: ${widget.deviceName}',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
             ),
-          ),
-          // Display the list of nearby devices, or show a loading message if none found
-          Expanded(
-            child: _devicesList.isEmpty
-                ? const Center(child: Text("Searching for nearby devices..."))
-                : ListView.builder(
-                    itemCount: _devicesList.length, // Number of devices found
-                    itemBuilder: (context, index) {
-                      final device = _devicesList[index];
-                      return Card(
-                        child: ListTile(
-                          title: Text(device.deviceName), // Display device name
-                          onTap: () => _connectToDevice(device), // Initiate connection on tap
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
+            Expanded(
+              child: _devicesList.isEmpty
+                  ? const Center(child: Text("Searching for nearby devices..."))
+                  : ListView.builder(
+                      itemCount: _devicesList.length,
+                      itemBuilder: (context, index) {
+                        final device = _devicesList[index];
+                        return Card(
+                          child: ListTile(
+                            title: Text(device.deviceName),
+                            onTap: () => _connectToDevice(device),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
