@@ -27,6 +27,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   StreamSubscription<dynamic>? _stateSubscription; // Subscription to device connection state updates
   StreamSubscription<dynamic>? _dataSubscription;  // Subscription to incoming message data
+  final ScrollController _scrollController = ScrollController(); // Controls automatic scrolling of the chat list
 
   @override
   void initState() {
@@ -55,6 +56,15 @@ class _ChatScreenState extends State<ChatScreen> {
             isSentByMe: false,
           ));
         });
+
+        // Scroll to the latest message after sending/receiving
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        });
       },
     );
   }
@@ -80,6 +90,15 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     _textController.clear(); // Clear the input box after sending
+
+    // Scroll to the latest message after sending/receiving
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    });
   }
 
   /// Handles disconnection from peer and cleanup
@@ -113,6 +132,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _stateSubscription?.cancel();
     _dataSubscription?.cancel();
     _textController.dispose();
+    _scrollController.dispose(); // Dispose scroll controller to free resources
     super.dispose();
   }
 
@@ -137,6 +157,7 @@ class _ChatScreenState extends State<ChatScreen> {
             // Message list display
             Expanded(
               child: ListView.builder(
+                controller: _scrollController, // Attach scroll controller to auto-scroll on updates
                 padding: const EdgeInsets.all(12),
                 itemCount: _messages.length,
                 itemBuilder: (context, index) {
