@@ -1,14 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_nearby_connections/flutter_nearby_connections.dart';
-import 'device_scan_screen.dart'; // Import the screen for scanning and connecting to new devices
+import 'package:blububb/messages/chat_message.dart'; // Import the correct chat message model
+import '/messages/chat_storage.dart'; // Import the chat storage for saving/loading messages
 
 /// The ChatScreen handles real-time peer-to-peer messaging using Bluetooth.
 /// It shows a conversation-style interface with message bubbles aligned left or right based on sender.
 class ChatScreen extends StatefulWidget {
   final Device device; // The connected peer device
   final NearbyService nearbyService; // Service handling Bluetooth communication
-  final String deviceName; // Local device name
+  final String deviceName; // Local device name used for chat storage
 
   const ChatScreen({
     super.key,
@@ -22,7 +23,7 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final List<_ChatMessage> _messages = []; // List of all messages in the current session
+  final List<ChatMessage> _messages = []; // List of all messages in the current session
   final TextEditingController _textController = TextEditingController(); // Controller for the text input field
 
   StreamSubscription<dynamic>? _stateSubscription; // Subscription to device connection state updates
@@ -32,6 +33,12 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+
+    // Load saved messages for the current username
+    final storedMessages = ChatStorage.getMessages(widget.deviceName);
+    for (var msg in storedMessages) {
+      _messages.add(ChatMessage(content: msg.content, isSentByMe: msg.isSentByMe, timestamp: msg.timestamp));
+    }
 
     // Listen for connection state changes (e.g., disconnection)
     _stateSubscription = widget.nearbyService.stateChangedSubscription(
@@ -49,15 +56,19 @@ class _ChatScreenState extends State<ChatScreen> {
     // Listen for incoming data (messages)
     _dataSubscription = widget.nearbyService.dataReceivedSubscription(
       callback: (data) {
-        // Add the received message to the UI, marked as received
+        final receivedMsg = ChatMessage(
+          content: data['message'] ?? '',
+          isSentByMe: false,
+          timestamp: DateTime.now(),
+        );
         setState(() {
-          _messages.add(_ChatMessage(
-            content: data['message'] ?? '',
-            isSentByMe: false,
-          ));
+          _messages.add(receivedMsg);
         });
 
-        // Scroll to the latest message after sending/receiving
+        // Save updated messages
+        _saveMessages();
+
+        // Scroll to the latest message after receiving
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _scrollController.animateTo(
             _scrollController.position.maxScrollExtent,
@@ -81,17 +92,23 @@ class _ChatScreenState extends State<ChatScreen> {
       text,
     );
 
+    final sentMsg = ChatMessage(
+      content: text,
+      isSentByMe: true,
+      timestamp: DateTime.now(),
+    );
+
     // Update the message list with the sent message
     setState(() {
-      _messages.add(_ChatMessage(
-        content: text,
-        isSentByMe: true,
-      ));
+      _messages.add(sentMsg);
     });
 
     _textController.clear(); // Clear the input box after sending
 
-    // Scroll to the latest message after sending/receiving
+    // Save updated messages
+    _saveMessages();
+
+    // Scroll to the latest message after sending
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
@@ -99,6 +116,14 @@ class _ChatScreenState extends State<ChatScreen> {
         curve: Curves.easeOut,
       );
     });
+  }
+
+  /// Save messages using ChatStorage under the current deviceName (username)
+  void _saveMessages() {
+    final messageObjects = _messages
+        .map((m) => ChatMessage(content: m.content, isSentByMe: m.isSentByMe, timestamp: m.timestamp))
+        .toList();
+    ChatStorage.saveMessages(widget.deviceName, messageObjects);
   }
 
   /// Handles disconnection from peer and cleanup
@@ -117,22 +142,21 @@ class _ChatScreenState extends State<ChatScreen> {
 
   /// Navigates to the device scan screen, clearing previous routes
   void _navigateToScanScreen() {
-    Navigator.pushAndRemoveUntil(
+    Navigator.pushNamedAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (_) => DeviceScanScreen(deviceName: widget.deviceName),
-      ),
-      (route) => false, // Remove all previous routes from the stack
+      '/scan',
+      (route) => false,
+      arguments: widget.deviceName,
     );
   }
 
   @override
   void dispose() {
-    // Cancel stream subscriptions and clean up controller
+    // Cancel stream subscriptions and clean up controllers
     _stateSubscription?.cancel();
     _dataSubscription?.cancel();
     _textController.dispose();
-    _scrollController.dispose(); // Dispose scroll controller to free resources
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -157,13 +181,12 @@ class _ChatScreenState extends State<ChatScreen> {
             // Message list display
             Expanded(
               child: ListView.builder(
-                controller: _scrollController, // Attach scroll controller to auto-scroll on updates
+                controller: _scrollController,
                 padding: const EdgeInsets.all(12),
                 itemCount: _messages.length,
                 itemBuilder: (context, index) {
                   final msg = _messages[index];
                   return Align(
-                    // Align to right if sent by this device, else to the left
                     alignment: msg.isSentByMe
                         ? Alignment.centerRight
                         : Alignment.centerLeft,
@@ -177,7 +200,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
-                        msg.content,
+                        msg.content, // Use 'content' from your ChatMessage model
                         style: TextStyle(
                           color: msg.isSentByMe ? Colors.white : Colors.black87,
                         ),
@@ -188,7 +211,6 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
             ),
 
-            // Divider line between messages and input area
             const Divider(height: 1),
 
             // Message input and send button
@@ -196,7 +218,6 @@ class _ChatScreenState extends State<ChatScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(
                 children: [
-                  // Text input field
                   Expanded(
                     child: TextField(
                       controller: _textController,
@@ -210,7 +231,6 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // Send button
                   IconButton(
                     icon: const Icon(Icons.send),
                     onPressed: _sendMessage,
@@ -224,16 +244,4 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
-}
-
-/// Internal model class for a chat message
-/// Each message has text content and a flag to indicate sender (me or peer)
-class _ChatMessage {
-  final String content;    // The text of the message
-  final bool isSentByMe;   // True if this device sent the message
-
-  _ChatMessage({
-    required this.content,
-    required this.isSentByMe,
-  });
 }
