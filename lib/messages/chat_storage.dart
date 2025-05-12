@@ -29,4 +29,14 @@ class ChatStorage {
     final Box<List> box = Hive.box<List>(boxName);
     return box.keys.cast<String>().toList();
   }
+
+  static void deleteMessagesForUser(String username) {
+    final Box<List> box = Hive.box<List>(boxName);
+    box.delete(username);
+  }
+
+  static void clearAllMessages() {
+    final Box<List> box = Hive.box<List>(boxName);
+    box.clear();
+  }
 }

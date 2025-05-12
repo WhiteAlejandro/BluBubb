@@ -62,7 +62,7 @@ class BluBubbApp extends StatelessWidget {
               ),
             );
 
-          case '/chatHistoryView':
+          case '/chatHistory':
             final username = settings.arguments as String;
             return MaterialPageRoute(
               builder: (context) => ChatHistoryScreen(username: username),
