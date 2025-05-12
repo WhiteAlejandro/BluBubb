@@ -4,6 +4,8 @@ import 'package:flutter_nearby_connections/flutter_nearby_connections.dart';
 import 'package:blububb/messages/chat_message.dart'; // Import the correct chat message model
 import '/messages/chat_storage.dart'; // Import the chat storage for saving/loading messages
 
+typedef AsyncCallback = Future<void> Function();
+
 /// The ChatScreen handles real-time peer-to-peer messaging using Bluetooth.
 /// It shows a conversation-style interface with message bubbles aligned left or right based on sender.
 class ChatScreen extends StatefulWidget {
@@ -29,16 +31,37 @@ class _ChatScreenState extends State<ChatScreen> {
   StreamSubscription<dynamic>? _stateSubscription; // Subscription to device connection state updates
   StreamSubscription<dynamic>? _dataSubscription;  // Subscription to incoming message data
   final ScrollController _scrollController = ScrollController(); // Controls automatic scrolling of the chat list
+  late final LifecycleEventHandler _lifecycleHandler;
 
   @override
   void initState() {
     super.initState();
+
+    // Register lifecycle observer
+    _lifecycleHandler = LifecycleEventHandler(
+      onMetricsChanged: () async {
+        await Future.delayed(const Duration(milliseconds: 100));
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+          );
+        }
+      },
+    );
+
+    WidgetsBinding.instance.addObserver(_lifecycleHandler);
 
     // Load saved messages for the current username
     final storedMessages = ChatStorage.getMessages(widget.deviceName);
     for (var msg in storedMessages) {
       _messages.add(ChatMessage(content: msg.content, isSentByMe: msg.isSentByMe, timestamp: msg.timestamp));
     }
+    // Scroll to bottom after messages are loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+    });
 
     // Listen for connection state changes (e.g., disconnection)
     _stateSubscription = widget.nearbyService.stateChangedSubscription(
@@ -152,6 +175,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    // Unregister lifecycle observer
+    WidgetsBinding.instance.removeObserver(_lifecycleHandler);
     // Cancel stream subscriptions and clean up controllers
     _stateSubscription?.cancel();
     _dataSubscription?.cancel();
@@ -163,22 +188,21 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      // Override Android back button to ensure disconnection occurs
       onWillPop: () async {
-        await _disconnect(); // Properly disconnect before exiting
-        return false; // Prevent default navigation behavior
+        await _disconnect();
+        return false;
       },
       child: Scaffold(
+        resizeToAvoidBottomInset: true, // Let Flutter adjust for the keyboard
         appBar: AppBar(
           title: Text('Chat with ${widget.device.deviceName}'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: _disconnect, // Manual disconnect on back icon tap
+            onPressed: _disconnect,
           ),
         ),
         body: Column(
           children: [
-            // Message list display
             Expanded(
               child: ListView.builder(
                 controller: _scrollController,
@@ -200,7 +224,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(
-                        msg.content, // Use 'content' from your ChatMessage model
+                        msg.content,
                         style: TextStyle(
                           color: msg.isSentByMe ? Colors.white : Colors.black87,
                         ),
@@ -210,12 +234,14 @@ class _ChatScreenState extends State<ChatScreen> {
                 },
               ),
             ),
-
             const Divider(height: 1),
-
-            // Message input and send button
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: EdgeInsets.fromLTRB(
+                8,
+                4,
+                8,
+                MediaQuery.of(context).viewPadding.bottom + 8,
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -243,5 +269,16 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       ),
     );
+  }
+}
+
+class LifecycleEventHandler extends WidgetsBindingObserver {
+  final AsyncCallback onMetricsChanged;
+
+  LifecycleEventHandler({required this.onMetricsChanged});
+
+  @override
+  void didChangeMetrics() {
+    onMetricsChanged(); // Trigger when the keyboard appears or disappears
   }
 }
