@@ -22,7 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _navigateToSavedChats() {
-    Navigator.pushNamed(context, '/saved');
+    Navigator.pushNamed(context, '/userHistory');
   }
 
   @override

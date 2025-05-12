@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart' as path_provider;
 import 'messages/chat_message.dart';
 import 'screens/home_screen.dart';
 import 'screens/device_scan_screen.dart';
+import 'screens/user_history_screen.dart';
 import 'screens/chat_history_screen.dart';
 import 'screens/chat_screen.dart';
 
@@ -21,7 +22,7 @@ void main() async {
   if (!Hive.isBoxOpen('chatBox')) {
     await Hive.openBox<List>('chatBox');
   }
-  
+
   runApp(const BluBubbApp());
 }
 
@@ -48,8 +49,8 @@ class BluBubbApp extends StatelessWidget {
               builder: (context) => DeviceScanScreen(deviceName: deviceName),
             );
 
-          case '/saved':
-            return MaterialPageRoute(builder: (context) => const ChatHistoryScreen());
+          case '/userHistory':
+            return MaterialPageRoute(builder: (context) => const UserHistoryScreen());
 
           case '/chat':
             final args = settings.arguments as Map<String, dynamic>;
@@ -59,6 +60,12 @@ class BluBubbApp extends StatelessWidget {
                 nearbyService: args['service'],
                 deviceName: args['deviceName'],
               ),
+            );
+
+          case '/chatHistoryView':
+            final username = settings.arguments as String;
+            return MaterialPageRoute(
+              builder: (context) => ChatHistoryScreen(username: username),
             );
 
           default:

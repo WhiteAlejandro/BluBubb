@@ -1,58 +1,87 @@
 import 'package:flutter/material.dart';
 import 'package:blububb/messages/chat_storage.dart';
 
-/// Displays a list of users with stored chat history.
-/// Each item navigates to a screen showing that chat.
+/// Displays the chat history of the selected user.
 class ChatHistoryScreen extends StatefulWidget {
-  const ChatHistoryScreen({super.key});
+  final String username;
+
+  const ChatHistoryScreen({
+    Key? key,
+    required this.username,
+  }) : super(key: key);
 
   @override
   State<ChatHistoryScreen> createState() => _ChatHistoryScreenState();
 }
 
 class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
-  late List<String> _usernamesWithChats;
+  final ScrollController _scrollController = ScrollController();
+  late final List messages;
 
   @override
   void initState() {
     super.initState();
-    _loadChatUsers();
-  }
+    messages = ChatStorage.getMessages(widget.username)
+      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
-  /// Loads all usernames (keys) that have saved chat history in Hive.
-  void _loadChatUsers() {
-    final allChats = ChatStorage.getAllUsernames();
-    setState(() {
-      _usernamesWithChats = allChats;
+    // Scroll to bottom after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+      }
     });
-  }
-
-  /// Navigates to a screen showing chat history with the selected user.
-  void _navigateToChatHistory(String username) {
-    Navigator.pushNamed(
-      context,
-      '/chat-history-view',
-      arguments: username,
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Chat History')),
-      body: _usernamesWithChats.isEmpty
-          ? const Center(child: Text('No chat history found.'))
+      appBar: AppBar(
+        title: Text('Chat History with ${widget.username}'),
+      ),
+      body: messages.isEmpty
+          ? const Center(child: Text('No chat history available.'))
           : ListView.builder(
-              itemCount: _usernamesWithChats.length,
+              controller: _scrollController,
+              padding: EdgeInsets.fromLTRB(
+                      8,
+                      4,
+                      8,
+                      MediaQuery.of(context).viewPadding.bottom + 8,
+                    ),
+              itemCount: messages.length,
               itemBuilder: (context, index) {
-                final username = _usernamesWithChats[index];
-                return ListTile(
-                  title: Text(username),
-                  leading: const Icon(Icons.person),
-                  onTap: () => _navigateToChatHistory(username),
+                final message = messages[index];
+                final isSentByMe = message.isSentByMe;
+
+                return Align(
+                  alignment: isSentByMe
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: isSentByMe
+                          ? Colors.blueAccent
+                          : Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      message.content,
+                      style: TextStyle(
+                        color: isSentByMe ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                  ),
                 );
               },
             ),
     );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 }
