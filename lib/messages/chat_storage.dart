@@ -23,4 +23,10 @@ class ChatStorage {
     final box = Hive.box<List>(boxName);
     await box.delete(username);
   }
+
+  // Returns a list of all usernames (keys) in the Hive chat box
+  static List<String> getAllUsernames() {
+    final Box<List> box = Hive.box<List>(boxName);
+    return box.keys.cast<String>().toList();
+  }
 }

@@ -57,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: _navigateToSavedChats,
-              child: const Text('Saved Chats'),
+              child: const Text('Chat History'),
             ),
           ],
         ),
