@@ -3,7 +3,7 @@ import 'package:blububb/messages/chat_storage.dart';
 
 /// Displays a list of users with whom chats are stored.
 class UserHistoryScreen extends StatefulWidget {
-  const UserHistoryScreen({Key? key}) : super(key: key);
+  const UserHistoryScreen({super.key});
 
   @override
   State<UserHistoryScreen> createState() => _UserHistoryScreenState();

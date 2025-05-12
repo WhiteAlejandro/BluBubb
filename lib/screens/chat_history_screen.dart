@@ -6,9 +6,9 @@ class ChatHistoryScreen extends StatefulWidget {
   final String username;
 
   const ChatHistoryScreen({
-    Key? key,
+    super.key,
     required this.username,
-  }) : super(key: key);
+  });
 
   @override
   State<ChatHistoryScreen> createState() => _ChatHistoryScreenState();

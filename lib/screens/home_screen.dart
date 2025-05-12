@@ -28,16 +28,27 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('BluBubb')),
+      appBar: AppBar(
+        title: const Text(
+          'BluBubb',
+          style: TextStyle(
+            fontSize: 64,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      centerTitle: true,
+    ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Temporary Bluetooth-style logo
-            const Icon(Icons.bluetooth, size: 100, color: Colors.blue),
+            Image.asset(
+              'assets/blububb_logo.png',
+              height: 250, // Adjust as needed
+            ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 64),
 
             // Text field with hint text
             TextField(
