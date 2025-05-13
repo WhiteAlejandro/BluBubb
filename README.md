@@ -111,7 +111,7 @@ lib/
 │   └── user_history_screen.dart     # Displays users with a past chat history
 ```
 
-###Other Notable Files and Directories
+### Other Notable Files and Directories
 - **ios/:** Contains iOS-specific configuration files for building and deploying via Xcode.
 - **assets/:** Static files (e.g., icons or images) if used.
 - **pubspec.yaml:** Contains the needed dependencies for the project
