@@ -71,22 +71,22 @@ Two campers at a remote group campsite have no internet or cellular service. The
 
 ### Setup Instructions
 1. Clone the Repository
-   '''
+   ```
    git clone https://github.com/yourusername/blububb.git
    cd blububb
-   '''
+   ```
 2. Install Dependencies
-   '''
+   ```
    flutter pub get
-   '''
+   ```
 3. Open in Xcode
    - Navigate to ios/ directory and open Runner.xcworkspace with Xcode.
-   - In Xcode, set your development team under 'Signing & Capabilities'.
+   - In Xcode, set your development team under `Signing & Capabilities`.
    - Connect your iOS device via USB and select it as the build target.
 4. Run in Release Mode (Optional, but Recommended)
-   '''
+   ```
    flutter build ios --release
-   '''
+   ```
    Then run the app on your device using Xcode (Product > Run).
    **Note:** You may need to trust the developer profile in your device settings (Settings > General > VPN & Device Management) if using a free Apple developer account.
    
@@ -95,7 +95,7 @@ Two campers at a remote group campsite have no internet or cellular service. The
 ## File Structure Overview
 
 Here’s a high-level look at the core files and their responsibilities:
-'''
+```
 lib/
 ├── main.dart                        # App entry point and route configuration
 ├── messages/
@@ -108,7 +108,7 @@ lib/
 │   ├── device_scan_screen.dart      # Finds nearby devices and handles Bluetooth connections
 │   ├── home_screen.dart             # Username input and home navigation
 │   └── user_history_screen.dart     # Displays users with a past chat history
-'''
+```
 
 ###Other Notable Files and Directories
 - **ios/:** Contains iOS-specific configuration files for building and deploying via Xcode.
