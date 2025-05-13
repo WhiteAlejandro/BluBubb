@@ -88,6 +88,7 @@ Two campers at a remote group campsite have no internet or cellular service. The
    flutter build ios --release
    ```
    Then run the app on your device using Xcode (Product > Run).<br>
+   
 **Note:** You may need to trust the developer profile in your device settings (Settings > General > VPN & Device Management) if using a free Apple developer account.
    
 ---
